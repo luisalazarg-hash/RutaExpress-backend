@@ -1,6 +1,8 @@
 spring:
   application:
     name: ms-auth
+  config:
+    import: optional:file:../../.env[.properties]
   datasource:
     url: ${AUTH_DB_URL}
     username: ${AUTH_DB_USERNAME}
