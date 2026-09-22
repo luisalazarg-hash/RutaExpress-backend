@@ -1,0 +1,42 @@
+services:
+  shipments:
+    build: ../ms-envios
+    ports: ["8081:8081"]
+    environment:
+      AZURE_ISSUER_URI: ${AZURE_ISSUER_URI:-}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+  catalog:
+    build: ../ms-catalogo
+    ports: ["8082:8082"]
+    environment:
+      AZURE_ISSUER_URI: ${AZURE_ISSUER_URI:-}
+  notify:
+    build: ../ms-notificaciones
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USERNAME: rutaexpress
+      RABBITMQ_PASSWORD: rutaexpress
+  audit:
+    build: ../ms-audit
+    ports: ["8084:8084"]
+    environment:
+      AZURE_ISSUER_URI: ${AZURE_ISSUER_URI:-}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+  report:
+    build: ../ms-reportes
+    ports: ["8085:8085"]
+    environment:
+      AZURE_ISSUER_URI: ${AZURE_ISSUER_URI:-}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+  rabbitmq-admin:
+    build: ../ms-rabbitmq-admin
+    ports: ["8086:8086"]
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USERNAME: rutaexpress
+      RABBITMQ_PASSWORD: rutaexpress
+  kafka-admin:
+    build: ../ms-kafka-admin
+    ports: ["8087:8087"]
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092

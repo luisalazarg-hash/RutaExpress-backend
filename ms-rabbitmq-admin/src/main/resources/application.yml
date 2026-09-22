@@ -1,0 +1,9 @@
+server.port: ${SERVER_PORT:8086}
+spring:
+  application.name: ms-rutaexpress-rabbitmq-admin
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:rutaexpress}
+    password: ${RABBITMQ_PASSWORD:rutaexpress}
+management.endpoints.web.exposure.include: health,info
