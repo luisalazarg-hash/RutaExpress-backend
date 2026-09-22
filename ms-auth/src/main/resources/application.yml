@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: ms-auth
+  datasource:
+    url: ${AUTH_DB_URL}
+    username: ${AUTH_DB_USERNAME}
+    password: ${AUTH_DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:validate}
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+server:
+  port: 8088
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
