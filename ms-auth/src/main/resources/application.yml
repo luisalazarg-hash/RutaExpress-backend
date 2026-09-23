@@ -3,6 +3,11 @@ spring:
     name: ms-auth
   config:
     import: optional:file:../../.env[.properties]
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://login.microsoftonline.com/${AUTH_AZURE_TENANT_ID}/v2.0
   datasource:
     url: ${AUTH_DB_URL}
     username: ${AUTH_DB_USERNAME}
@@ -23,3 +28,6 @@ management:
     web:
       exposure:
         include: health,info
+app:
+  azure:
+    api-client-id: ${AUTH_AZURE_API_CLIENT_ID}
