@@ -2,16 +2,18 @@ server:
   port: ${SERVER_PORT:8084}
 spring:
   application:
-    name: ms-rutaexpress-audit
+    name: ms-audit
+  config:
+    import: optional:file:../.env[.properties]
   security:
     oauth2:
       resourceserver:
         jwt:
           issuer-uri: ${AZURE_ISSUER_URI:}
   datasource:
-    url: ${SUPABASE_DB_URL}
-    username: ${SUPABASE_DB_USERNAME}
-    password: ${SUPABASE_DB_PASSWORD}
+    url: ${AUDIT_DB_URL}
+    username: ${AUDIT_DB_USERNAME}
+    password: ${AUDIT_DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:

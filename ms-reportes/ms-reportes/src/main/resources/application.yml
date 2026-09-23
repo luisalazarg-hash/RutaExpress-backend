@@ -4,10 +4,12 @@ spring:
   application:
     name: ms-reportes
   datasource:
-    url: ${SUPABASE_DB_URL}
-    username: ${SUPABASE_DB_USERNAME}
-    password: ${SUPABASE_DB_PASSWORD}
+    url: ${REPORTES_DB_URL}
+    username: ${REPORTES_DB_USERNAME}
+    password: ${REPORTES_DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
+  config:
+    import: optional:file:../../.env[.properties]
   jpa:
     hibernate:
       ddl-auto: ${JPA_DDL_AUTO:update}
