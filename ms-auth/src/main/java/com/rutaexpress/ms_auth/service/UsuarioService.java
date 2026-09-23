@@ -159,6 +159,149 @@ public class UsuarioService {
 		return convertirAResponse(usuario);
 	}
 
+	@Transactional
+	public UsuarioResponse vincularUsuarioEntra(
+			UUID entraOid,
+			UUID entraTid,
+			String email
+	) {
+
+		// Si ya está vinculado, simplemente devolverlo
+		var usuarioVinculado = usuarioRepository
+				.findByEntraOidAndEntraTid(entraOid, entraTid);
+
+		if (usuarioVinculado.isPresent()) {
+
+			Usuario usuario = usuarioVinculado.get();
+
+			if (usuario.getEstado() != EstadoUsuario.ACTIVO) {
+				throw new AccesoDenegadoException(
+						"El usuario no se encuentra activo"
+				);
+			}
+
+			return convertirAResponse(usuario);
+		}
+
+		if (email == null || email.isBlank()) {
+			throw new AccesoDenegadoException(
+					"Microsoft no proporcionó un correo para vincular el usuario"
+			);
+		}
+
+		String emailNormalizado =
+				email.trim().toLowerCase(Locale.ROOT);
+
+		// El ADMIN debe haber creado previamente este usuario
+		Usuario usuario = usuarioRepository
+				.findByEmail(emailNormalizado)
+				.orElseThrow(() ->
+						new AccesoDenegadoException(
+								"No existe un usuario autorizado con este correo"
+						)
+				);
+
+		// Evitar reemplazar una identidad ya vinculada
+		if (usuario.getEntraOid() != null ||
+				usuario.getEntraTid() != null) {
+
+			throw new AccesoDenegadoException(
+					"El usuario ya está vinculado a otra identidad de Microsoft"
+			);
+		}
+
+		if (usuario.getEstado() != EstadoUsuario.PENDIENTE) {
+			throw new AccesoDenegadoException(
+					"El usuario no está pendiente de activación"
+			);
+		}
+
+		usuario.setEntraOid(entraOid);
+		usuario.setEntraTid(entraTid);
+		usuario.setEstado(EstadoUsuario.ACTIVO);
+
+		Usuario guardado = usuarioRepository.save(usuario);
+
+		return convertirAResponse(guardado);
+	}
+
+	@Transactional
+	public UsuarioResponse actualizarEstado(
+		Long id,
+		EstadoUsuario nuevoEstado
+	) {
+
+		if (nuevoEstado == null) {
+			throw new IllegalArgumentException(
+					"El estado es obligatorio"
+			);
+		}
+
+		Usuario usuario = usuarioRepository.findById(id)
+				.orElseThrow(() ->
+						new IllegalArgumentException(
+								"No existe un usuario con ID: " + id
+						)
+				);
+
+		usuario.setEstado(nuevoEstado);
+
+		return convertirAResponse(
+				usuarioRepository.save(usuario)
+		);
+	}
+
+	@Transactional
+	public UsuarioResponse actualizarRol(
+		Long id,
+		Rol nuevoRol,
+		Long empresaId
+	) {
+
+		if (nuevoRol == null) {
+			throw new IllegalArgumentException(
+					"El rol es obligatorio"
+			);
+		}
+
+		Usuario usuario = usuarioRepository.findById(id)
+				.orElseThrow(() ->
+						new IllegalArgumentException(
+								"No existe un usuario con ID: " + id
+						)
+				);
+
+		Empresa empresa = null;
+
+		if (nuevoRol == Rol.ADMIN) {
+
+			if (empresaId != null) {
+				throw new IllegalArgumentException(
+						"El administrador de plataforma no debe tener una empresa asociada"
+				);
+			}
+
+		} else {
+
+			if (empresaId == null) {
+				throw new IllegalArgumentException(
+						"Debe seleccionar una empresa para este rol"
+				);
+			}
+
+			empresa = empresaService.obtenerEmpresaActiva(
+					empresaId
+			);
+		}
+
+		usuario.setRol(nuevoRol);
+		usuario.setEmpresa(empresa);
+
+		return convertirAResponse(
+				usuarioRepository.save(usuario)
+		);
+	}
+
     private UsuarioResponse convertirAResponse(Usuario usuario) {
 
         Empresa empresa = usuario.getEmpresa();

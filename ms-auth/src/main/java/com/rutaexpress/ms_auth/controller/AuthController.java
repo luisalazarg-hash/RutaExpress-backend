@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.rutaexpress.ms_auth.exception.AccesoDenegadoException;
+import org.springframework.web.bind.annotation.PostMapping;
+
 import java.util.UUID;
 
 @RestController
@@ -23,9 +26,7 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public UsuarioResponse obtenerUsuarioActual(
-            @AuthenticationPrincipal Jwt jwt
-    ) {
+    public UsuarioResponse obtenerUsuarioActual(@AuthenticationPrincipal Jwt jwt) {
 
         String oid = jwt.getClaimAsString("oid");
         String tid = jwt.getClaimAsString("tid");
@@ -39,6 +40,29 @@ public class AuthController {
         return usuarioService.obtenerUsuarioActual(
                 UUID.fromString(oid),
                 UUID.fromString(tid)
+        );
+    }
+
+    @PostMapping("/vincular")
+    public UsuarioResponse vincularUsuario( @AuthenticationPrincipal Jwt jwt) {
+
+        String oid = jwt.getClaimAsString("oid");
+        String tid = jwt.getClaimAsString("tid");
+
+        String email = jwt.getClaimAsString(
+                "preferred_username"
+        );
+
+        if (oid == null || tid == null) {
+            throw new AccesoDenegadoException(
+                    "El token no contiene los identificadores necesarios"
+            );
+        }
+
+        return usuarioService.vincularUsuarioEntra(
+                UUID.fromString(oid),
+                UUID.fromString(tid),
+                email
         );
     }
 }
