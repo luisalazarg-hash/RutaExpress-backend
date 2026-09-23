@@ -32,6 +32,29 @@ public class UsuarioService {
         this.empresaService = empresaService;
     }
 
+    @Transactional(readOnly = true)
+        public Usuario obtenerUsuarioActivo(
+                UUID entraOid,
+                UUID entraTid
+        ) {
+
+        Usuario usuario = usuarioRepository
+                .findByEntraOidAndEntraTid(entraOid, entraTid)
+                .orElseThrow(() ->
+                        new AccesoDenegadoException(
+                                "El usuario autenticado no está registrado en RutaExpress"
+                        )
+                );
+
+        if (usuario.getEstado() != EstadoUsuario.ACTIVO) {
+                throw new AccesoDenegadoException(
+                        "El usuario no se encuentra activo"
+                );
+        }
+
+        return usuario;
+        }
+
     @Transactional
     public UsuarioResponse crearUsuario(CrearUsuarioRequest request) {
 
@@ -129,27 +152,12 @@ public class UsuarioService {
         return convertirAResponse(usuario);
     }
 
-    public UsuarioResponse obtenerUsuarioActual(
-        UUID entraOid,
-        UUID entraTid
-) {
+    @Transactional(readOnly = true)
+	public UsuarioResponse obtenerUsuarioActual(UUID entraOid, UUID entraTid){
+		Usuario usuario = obtenerUsuarioActivo(entraOid, entraTid);
 
-    Usuario usuario = usuarioRepository
-            .findByEntraOidAndEntraTid(entraOid, entraTid)
-            .orElseThrow(() ->
-                    new AccesoDenegadoException(
-                            "El usuario autenticado no está registrado en RutaExpress"
-                    )
-            );
-
-    if (usuario.getEstado() != EstadoUsuario.ACTIVO) {
-        throw new AccesoDenegadoException(
-                "El usuario no se encuentra activo"
-        );
-    }
-
-    return convertirAResponse(usuario);
-}
+		return convertirAResponse(usuario);
+	}
 
     private UsuarioResponse convertirAResponse(Usuario usuario) {
 
