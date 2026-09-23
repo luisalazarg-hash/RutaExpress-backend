@@ -22,12 +22,20 @@ services:
     environment:
       AZURE_ISSUER_URI: ${AZURE_ISSUER_URI:-}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      AUDIT_DB_URL: ${AUDIT_DB_URL}
+      AUDIT_DB_USERNAME: ${AUDIT_DB_USERNAME}
+      AUDIT_DB_PASSWORD: ${AUDIT_DB_PASSWORD}
+      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
   report:
     build: ../ms-reportes
     ports: ["8085:8085"]
     environment:
       AZURE_ISSUER_URI: ${AZURE_ISSUER_URI:-}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      REPORTES_DB_URL: ${REPORTES_DB_URL}
+      REPORTES_DB_USERNAME: ${REPORTES_DB_USERNAME}
+      REPORTES_DB_PASSWORD: ${REPORTES_DB_PASSWORD}
+      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
   rabbitmq-admin:
     build: ../ms-rabbitmq-admin
     ports: ["8086:8086"]
