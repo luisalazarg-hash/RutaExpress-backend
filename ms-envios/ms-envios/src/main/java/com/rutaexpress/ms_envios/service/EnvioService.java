@@ -28,4 +28,6 @@ public class EnvioService {
         envio.setEstado(estado);
         return repository.save(envio);
     }
+
+    public void eliminar(UUID id) { repository.deleteById(id); }
 }

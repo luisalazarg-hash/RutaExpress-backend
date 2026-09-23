@@ -27,7 +27,9 @@ public class SecurityConfig {
                 .requestMatchers(
                     HttpMethod.GET,
                     "/actuator/health",
-                    "/actuator/health/**"
+                    "/actuator/health/**",
+                    "/api/auth/companies",
+                    "/api/auth/companies/**"
                 ).permitAll()
 
                 // Proteger cualquier otra ruta
