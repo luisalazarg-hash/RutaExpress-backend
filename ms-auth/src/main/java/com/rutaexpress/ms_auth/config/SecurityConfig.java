@@ -7,6 +7,7 @@ import org.springframework.http.HttpMethod;
 
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -21,17 +22,29 @@ public class SecurityConfig {
         http
             .csrf(AbstractHttpConfigurer::disable)
 
+            // La API trabajará con JWT, no con sesiones
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(
+                    SessionCreationPolicy.STATELESS
+                )
+            )
+
             .authorizeHttpRequests(auth -> auth
 
-                // Permitir consultar el estado del microservicio
+                // Health check público
                 .requestMatchers(
                     HttpMethod.GET,
                     "/actuator/health",
                     "/actuator/health/**"
                 ).permitAll()
 
-                // Proteger cualquier otra ruta
-                .anyRequest().denyAll()
+                // Cualquier otra ruta requiere un JWT válido
+                .anyRequest().authenticated()
+            )
+
+            // Microsoft Entra ID -> Bearer JWT
+            .oauth2ResourceServer(oauth2 ->
+                oauth2.jwt(jwt -> {})
             );
 
         return http.build();
