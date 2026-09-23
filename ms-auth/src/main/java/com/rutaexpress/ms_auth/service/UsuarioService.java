@@ -7,6 +7,7 @@ import com.rutaexpress.ms_auth.model.Empresa;
 import com.rutaexpress.ms_auth.model.EstadoUsuario;
 import com.rutaexpress.ms_auth.model.Rol;
 import com.rutaexpress.ms_auth.model.Usuario;
+import com.rutaexpress.ms_auth.exception.AccesoDenegadoException;
 
 import com.rutaexpress.ms_auth.repository.UsuarioRepository;
 
@@ -131,24 +132,24 @@ public class UsuarioService {
     public UsuarioResponse obtenerUsuarioActual(
         UUID entraOid,
         UUID entraTid
-        ) {
+) {
 
-                Usuario usuario = usuarioRepository
-                        .findByEntraOidAndEntraTid(entraOid, entraTid)
-                        .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "El usuario autenticado no está registrado en RutaExpress"
-                                )
-                        );
+    Usuario usuario = usuarioRepository
+            .findByEntraOidAndEntraTid(entraOid, entraTid)
+            .orElseThrow(() ->
+                    new AccesoDenegadoException(
+                            "El usuario autenticado no está registrado en RutaExpress"
+                    )
+            );
 
-                if (usuario.getEstado() != EstadoUsuario.ACTIVO) {
-                        throw new IllegalStateException(
-                                "El usuario no se encuentra activo"
-                        );
-                }
+    if (usuario.getEstado() != EstadoUsuario.ACTIVO) {
+        throw new AccesoDenegadoException(
+                "El usuario no se encuentra activo"
+        );
+    }
 
-                return convertirAResponse(usuario);
-        }
+    return convertirAResponse(usuario);
+}
 
     private UsuarioResponse convertirAResponse(Usuario usuario) {
 
