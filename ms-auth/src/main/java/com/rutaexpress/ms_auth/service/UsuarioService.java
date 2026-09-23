@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
 @Service
 public class UsuarioService {
@@ -126,6 +127,28 @@ public class UsuarioService {
 
         return convertirAResponse(usuario);
     }
+
+    public UsuarioResponse obtenerUsuarioActual(
+        UUID entraOid,
+        UUID entraTid
+        ) {
+
+                Usuario usuario = usuarioRepository
+                        .findByEntraOidAndEntraTid(entraOid, entraTid)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "El usuario autenticado no está registrado en RutaExpress"
+                                )
+                        );
+
+                if (usuario.getEstado() != EstadoUsuario.ACTIVO) {
+                        throw new IllegalStateException(
+                                "El usuario no se encuentra activo"
+                        );
+                }
+
+                return convertirAResponse(usuario);
+        }
 
     private UsuarioResponse convertirAResponse(Usuario usuario) {
 
