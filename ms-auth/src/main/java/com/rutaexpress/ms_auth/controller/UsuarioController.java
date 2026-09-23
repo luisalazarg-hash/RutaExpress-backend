@@ -3,6 +3,8 @@ package com.rutaexpress.ms_auth.controller;
 import com.rutaexpress.ms_auth.dto.CrearUsuarioRequest;
 import com.rutaexpress.ms_auth.dto.UsuarioResponse;
 import com.rutaexpress.ms_auth.service.UsuarioService;
+import com.rutaexpress.ms_auth.dto.ActualizarEstadoUsuarioRequest;
+import com.rutaexpress.ms_auth.dto.ActualizarRolUsuarioRequest;
 
 import jakarta.validation.Valid;
 
@@ -56,4 +58,36 @@ public class UsuarioController {
 
         return usuarioService.crearUsuario(request);
     }
+
+    @PatchMapping("/{id}/estado")
+    @PreAuthorize(
+        "@autorizacionService.tieneRol(authentication, T(com.rutaexpress.ms_auth.model.Rol).ADMIN)"
+    )
+    public UsuarioResponse actualizarEstado(
+            @PathVariable Long id,
+            @Valid @RequestBody ActualizarEstadoUsuarioRequest request
+    ) {
+
+        return usuarioService.actualizarEstado(
+                id,
+                request.estado()
+        );
+    }
+
+    @PatchMapping("/{id}/rol")
+    @PreAuthorize(
+        "@autorizacionService.tieneRol(authentication, T(com.rutaexpress.ms_auth.model.Rol).ADMIN)"
+    )
+    public UsuarioResponse actualizarRol(
+            @PathVariable Long id,
+            @Valid @RequestBody ActualizarRolUsuarioRequest request
+    ) {
+
+        return usuarioService.actualizarRol(
+                id,
+                request.rol(),
+                request.empresaId()
+        );
+    }
+
 }
