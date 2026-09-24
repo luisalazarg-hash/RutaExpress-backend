@@ -2,7 +2,7 @@ spring:
   application:
     name: ms-auth
   config:
-    import: optional:file:../../.env[.properties]
+    import: optional:file:../.env[.properties]
   security:
     oauth2:
       resourceserver:
