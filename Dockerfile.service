@@ -1,0 +1,15 @@
+FROM maven:3.9.11-eclipse-temurin-21 AS build
+
+WORKDIR /workspace
+COPY . .
+ARG MODULE_PATH
+RUN mvn -B -ntp -f "${MODULE_PATH}/pom.xml" -DskipTests package \
+    && jar_file="$(find "${MODULE_PATH}/target" -maxdepth 1 -type f -name '*.jar' ! -name '*.jar.original' | head -n 1)" \
+    && test -n "$jar_file" \
+    && mkdir -p /app \
+    && cp "$jar_file" /app/app.jar
+
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+COPY --from=build /app/app.jar app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]
