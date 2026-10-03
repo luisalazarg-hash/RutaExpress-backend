@@ -2,13 +2,11 @@ package com.rutaexpress.ms_auth.service;
 
 import com.rutaexpress.ms_auth.dto.CrearUsuarioRequest;
 import com.rutaexpress.ms_auth.dto.UsuarioResponse;
-
+import com.rutaexpress.ms_auth.exception.AccesoDenegadoException;
 import com.rutaexpress.ms_auth.model.Empresa;
 import com.rutaexpress.ms_auth.model.EstadoUsuario;
 import com.rutaexpress.ms_auth.model.Rol;
 import com.rutaexpress.ms_auth.model.Usuario;
-import com.rutaexpress.ms_auth.exception.AccesoDenegadoException;
-
 import com.rutaexpress.ms_auth.repository.UsuarioRepository;
 
 import org.springframework.stereotype.Service;
@@ -33,11 +31,10 @@ public class UsuarioService {
     }
 
     @Transactional(readOnly = true)
-        public Usuario obtenerUsuarioActivo(
-                UUID entraOid,
-                UUID entraTid
-        ) {
-
+    public Usuario obtenerUsuarioActivo(
+            UUID entraOid,
+            UUID entraTid
+    ) {
         Usuario usuario = usuarioRepository
                 .findByEntraOidAndEntraTid(entraOid, entraTid)
                 .orElseThrow(() ->
@@ -47,17 +44,36 @@ public class UsuarioService {
                 );
 
         if (usuario.getEstado() != EstadoUsuario.ACTIVO) {
-                throw new AccesoDenegadoException(
-                        "El usuario no se encuentra activo"
-                );
+            throw new AccesoDenegadoException(
+                    "El usuario no se encuentra activo"
+            );
         }
 
         return usuario;
-        }
+    }
 
     @Transactional
-    public UsuarioResponse crearUsuario(CrearUsuarioRequest request) {
+    public UsuarioResponse obtenerUsuarioActual(
+            UUID entraOid,
+            UUID entraTid,
+            Rol rolEntra
+    ) {
+        Usuario usuario = obtenerUsuarioActivo(
+                entraOid,
+                entraTid
+        );
 
+        if (sincronizarRolDesdeEntra(usuario, rolEntra)) {
+            usuario = usuarioRepository.save(usuario);
+        }
+
+        return convertirAResponse(usuario);
+    }
+
+    @Transactional
+    public UsuarioResponse crearUsuario(
+            CrearUsuarioRequest request
+    ) {
         if (request == null) {
             throw new IllegalArgumentException(
                     "Los datos del usuario son obligatorios"
@@ -70,7 +86,9 @@ public class UsuarioService {
 
         String email = request.email() == null
                 ? ""
-                : request.email().trim().toLowerCase(Locale.ROOT);
+                : request.email()
+                        .trim()
+                        .toLowerCase(Locale.ROOT);
 
         if (nombre.isBlank() || nombre.length() > 150) {
             throw new IllegalArgumentException(
@@ -99,7 +117,6 @@ public class UsuarioService {
         Empresa empresa = null;
 
         if (request.rol() != Rol.ADMIN) {
-
             if (request.empresaId() == null) {
                 throw new IllegalArgumentException(
                         "Debe seleccionar una empresa para este rol"
@@ -111,7 +128,6 @@ public class UsuarioService {
             );
 
         } else if (request.empresaId() != null) {
-
             throw new IllegalArgumentException(
                     "El administrador de plataforma no debe tener una empresa asociada"
             );
@@ -132,17 +148,19 @@ public class UsuarioService {
 
     @Transactional(readOnly = true)
     public List<UsuarioResponse> listarUsuarios() {
-
-        return usuarioRepository.findAll()
+        return usuarioRepository
+                .findAll()
                 .stream()
                 .map(this::convertirAResponse)
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public UsuarioResponse obtenerUsuarioPorId(Long id) {
-
-        Usuario usuario = usuarioRepository.findById(id)
+    public UsuarioResponse obtenerUsuarioPorId(
+            Long id
+    ) {
+        Usuario usuario = usuarioRepository
+                .findById(id)
                 .orElseThrow(() ->
                         new IllegalArgumentException(
                                 "No existe un usuario con ID: " + id
@@ -152,158 +170,150 @@ public class UsuarioService {
         return convertirAResponse(usuario);
     }
 
-    @Transactional(readOnly = true)
-	public UsuarioResponse obtenerUsuarioActual(UUID entraOid, UUID entraTid){
-		Usuario usuario = obtenerUsuarioActivo(entraOid, entraTid);
+    @Transactional
+    public UsuarioResponse vincularUsuarioEntra(
+            UUID entraOid,
+            UUID entraTid,
+            String email,
+            Rol rolEntra
+    ) {
+        var usuarioVinculado = usuarioRepository
+                .findByEntraOidAndEntraTid(
+                        entraOid,
+                        entraTid
+                );
 
-		return convertirAResponse(usuario);
-	}
+        if (usuarioVinculado.isPresent()) {
+            Usuario usuario = usuarioVinculado.get();
 
-	@Transactional
-	public UsuarioResponse vincularUsuarioEntra(
-			UUID entraOid,
-			UUID entraTid,
-			String email
-	) {
+            if (usuario.getEstado() != EstadoUsuario.ACTIVO) {
+                throw new AccesoDenegadoException(
+                        "El usuario no se encuentra activo"
+                );
+            }
 
-		// Si ya está vinculado, simplemente devolverlo
-		var usuarioVinculado = usuarioRepository
-				.findByEntraOidAndEntraTid(entraOid, entraTid);
+            if (sincronizarRolDesdeEntra(usuario, rolEntra)) {
+                usuario = usuarioRepository.save(usuario);
+            }
 
-		if (usuarioVinculado.isPresent()) {
+            return convertirAResponse(usuario);
+        }
 
-			Usuario usuario = usuarioVinculado.get();
+        if (email == null || email.isBlank()) {
+            throw new AccesoDenegadoException(
+                    "Microsoft no proporcionó un correo para vincular el usuario"
+            );
+        }
 
-			if (usuario.getEstado() != EstadoUsuario.ACTIVO) {
-				throw new AccesoDenegadoException(
-						"El usuario no se encuentra activo"
-				);
-			}
+        String emailNormalizado = email
+                .trim()
+                .toLowerCase(Locale.ROOT);
 
-			return convertirAResponse(usuario);
-		}
+        Usuario usuario = usuarioRepository
+                .findByEmail(emailNormalizado)
+                .orElseThrow(() ->
+                        new AccesoDenegadoException(
+                                "No existe un usuario autorizado con este correo"
+                        )
+                );
 
-		if (email == null || email.isBlank()) {
-			throw new AccesoDenegadoException(
-					"Microsoft no proporcionó un correo para vincular el usuario"
-			);
-		}
+        if (usuario.getEntraOid() != null ||
+                usuario.getEntraTid() != null) {
 
-		String emailNormalizado =
-				email.trim().toLowerCase(Locale.ROOT);
+            throw new AccesoDenegadoException(
+                    "El usuario ya está vinculado a otra identidad de Microsoft"
+            );
+        }
 
-		// El ADMIN debe haber creado previamente este usuario
-		Usuario usuario = usuarioRepository
-				.findByEmail(emailNormalizado)
-				.orElseThrow(() ->
-						new AccesoDenegadoException(
-								"No existe un usuario autorizado con este correo"
-						)
-				);
+        if (usuario.getEstado() != EstadoUsuario.PENDIENTE) {
+            throw new AccesoDenegadoException(
+                    "El usuario no está pendiente de activación"
+            );
+        }
 
-		// Evitar reemplazar una identidad ya vinculada
-		if (usuario.getEntraOid() != null ||
-				usuario.getEntraTid() != null) {
+        sincronizarRolDesdeEntra(
+                usuario,
+                rolEntra
+        );
 
-			throw new AccesoDenegadoException(
-					"El usuario ya está vinculado a otra identidad de Microsoft"
-			);
-		}
+        usuario.setEntraOid(entraOid);
+        usuario.setEntraTid(entraTid);
+        usuario.setEstado(EstadoUsuario.ACTIVO);
 
-		if (usuario.getEstado() != EstadoUsuario.PENDIENTE) {
-			throw new AccesoDenegadoException(
-					"El usuario no está pendiente de activación"
-			);
-		}
+        Usuario guardado = usuarioRepository.save(usuario);
 
-		usuario.setEntraOid(entraOid);
-		usuario.setEntraTid(entraTid);
-		usuario.setEstado(EstadoUsuario.ACTIVO);
+        return convertirAResponse(guardado);
+    }
 
-		Usuario guardado = usuarioRepository.save(usuario);
+    @Transactional
+    public UsuarioResponse actualizarEstado(
+            Long id,
+            EstadoUsuario nuevoEstado
+    ) {
+        if (nuevoEstado == null) {
+            throw new IllegalArgumentException(
+                    "El estado es obligatorio"
+            );
+        }
 
-		return convertirAResponse(guardado);
-	}
+        Usuario usuario = usuarioRepository
+                .findById(id)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "No existe un usuario con ID: " + id
+                        )
+                );
 
-	@Transactional
-	public UsuarioResponse actualizarEstado(
-		Long id,
-		EstadoUsuario nuevoEstado
-	) {
+        usuario.setEstado(nuevoEstado);
 
-		if (nuevoEstado == null) {
-			throw new IllegalArgumentException(
-					"El estado es obligatorio"
-			);
-		}
+        return convertirAResponse(
+                usuarioRepository.save(usuario)
+        );
+    }
 
-		Usuario usuario = usuarioRepository.findById(id)
-				.orElseThrow(() ->
-						new IllegalArgumentException(
-								"No existe un usuario con ID: " + id
-						)
-				);
+    @Transactional
+    public UsuarioResponse actualizarRol(
+            Long id,
+            Rol nuevoRol,
+            Long empresaId
+    ) {
+        throw new AccesoDenegadoException(
+                "Los roles de RutaExpress se administran desde Microsoft Entra ID"
+        );
+    }
 
-		usuario.setEstado(nuevoEstado);
+    private boolean sincronizarRolDesdeEntra(
+            Usuario usuario,
+            Rol rolEntra
+    ) {
+        if (rolEntra == null) {
+            throw new AccesoDenegadoException(
+                    "El usuario no tiene un rol válido asignado en Microsoft Entra ID"
+            );
+        }
 
-		return convertirAResponse(
-				usuarioRepository.save(usuario)
-		);
-	}
+        if (usuario.getRol() == rolEntra) {
+            return false;
+        }
 
-	@Transactional
-	public UsuarioResponse actualizarRol(
-		Long id,
-		Rol nuevoRol,
-		Long empresaId
-	) {
+        if (rolEntra == Rol.ADMIN) {
+            usuario.setEmpresa(null);
 
-		if (nuevoRol == null) {
-			throw new IllegalArgumentException(
-					"El rol es obligatorio"
-			);
-		}
+        } else if (usuario.getEmpresa() == null) {
+            throw new AccesoDenegadoException(
+                    "El rol " + rolEntra
+                            + " requiere que el usuario tenga una empresa asignada"
+            );
+        }
 
-		Usuario usuario = usuarioRepository.findById(id)
-				.orElseThrow(() ->
-						new IllegalArgumentException(
-								"No existe un usuario con ID: " + id
-						)
-				);
+        usuario.setRol(rolEntra);
 
-		Empresa empresa = null;
+        return true;
+    }
 
-		if (nuevoRol == Rol.ADMIN) {
-
-			if (empresaId != null) {
-				throw new IllegalArgumentException(
-						"El administrador de plataforma no debe tener una empresa asociada"
-				);
-			}
-
-		} else {
-
-			if (empresaId == null) {
-				throw new IllegalArgumentException(
-						"Debe seleccionar una empresa para este rol"
-				);
-			}
-
-			empresa = empresaService.obtenerEmpresaActiva(
-					empresaId
-			);
-		}
-
-		usuario.setRol(nuevoRol);
-		usuario.setEmpresa(empresa);
-
-		return convertirAResponse(
-				usuarioRepository.save(usuario)
-		);
-	}
-
-    private UsuarioResponse convertirAResponse(Usuario usuario) {
-
+    private UsuarioResponse convertirAResponse(
+            Usuario usuario
+    ) {
         Empresa empresa = usuario.getEmpresa();
 
         return new UsuarioResponse(

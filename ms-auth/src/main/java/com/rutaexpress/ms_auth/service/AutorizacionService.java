@@ -1,12 +1,12 @@
 package com.rutaexpress.ms_auth.service;
 
 import com.rutaexpress.ms_auth.model.Rol;
-import com.rutaexpress.ms_auth.model.Usuario;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service("autorizacionService")
@@ -40,13 +40,18 @@ public class AutorizacionService {
 
         try {
 
-            Usuario usuario =
-                    usuarioService.obtenerUsuarioActivo(
-                            UUID.fromString(oid),
-                            UUID.fromString(tid)
-                    );
+            // Comprueba que el usuario exista y esté activo
+            usuarioService.obtenerUsuarioActivo(
+                    UUID.fromString(oid),
+                    UUID.fromString(tid)
+            );
 
-            return usuario.getRol() == rol;
+            // El rol se obtiene desde Entra ID
+            List<String> roles =
+                    jwt.getClaimAsStringList("roles");
+
+            return roles != null &&
+                    roles.contains(rol.name());
 
         } catch (RuntimeException ex) {
             return false;
