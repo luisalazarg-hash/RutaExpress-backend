@@ -64,15 +64,12 @@ services:
       args:
         MODULE_PATH: ms-auth
     environment:
-      AUTH_DB_URL: jdbc:postgresql://postgres:5432/auth_db
-      AUTH_DB_USERNAME: ${POSTGRES_USER:-rutaexpress}
-      AUTH_DB_PASSWORD: ${POSTGRES_PASSWORD:-rutaexpress_local}
+      AUTH_DB_URL: ${AUTH_DB_URL}
+      AUTH_DB_USERNAME: ${AUTH_DB_USERNAME}
+      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD}
       AUTH_AZURE_TENANT_ID: ${AUTH_AZURE_TENANT_ID:-common}
       AUTH_AZURE_API_CLIENT_ID: ${AUTH_AZURE_API_CLIENT_ID:-local-placeholder}
       JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
-    depends_on:
-      postgres:
-        condition: service_healthy
     restart: unless-stopped
 
   shipments:
@@ -226,7 +223,7 @@ services:
 
   frontend:
     build:
-      context: ../RutaExpress-frontend
+      context: ../RutaExpress-Front
       args:
         VITE_API_URL: ""
         VITE_AZURE_CLIENT_ID: ${VITE_AZURE_CLIENT_ID:-}
