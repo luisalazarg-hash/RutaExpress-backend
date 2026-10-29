@@ -4,17 +4,30 @@ spring:
   application:
     name: ms-notificaciones
   datasource:
-    url: ${SUPABASE_DB_URL}
-    username: ${SUPABASE_DB_USERNAME}
-    password: ${SUPABASE_DB_PASSWORD}
-    driver-class-name: org.postgresql.Driver
+    url: ${SUPABASE_DB_URL:jdbc:h2:mem:rutaexpress-notificaciones;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
+    username: ${SUPABASE_DB_USERNAME:sa}
+    password: ${SUPABASE_DB_PASSWORD:}
+    driver-class-name: ${SUPABASE_DB_DRIVER_CLASS_NAME:org.h2.Driver}
   jpa:
     hibernate:
       ddl-auto: ${JPA_DDL_AUTO:update}
     open-in-view: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        dialect: ${HIBERNATE_DIALECT:org.hibernate.dialect.H2Dialect}
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:rutaexpress}
+    password: ${RABBITMQ_PASSWORD:rutaexpress}
+    listener:
+      simple:
+        auto-startup: ${RABBITMQ_LISTENER_AUTO_STARTUP:false}
+app:
+  rabbitmq:
+    exchange: ${RABBITMQ_EXCHANGE:rutaexpress.events}
+    queue: ${RABBITMQ_QUEUE:rutaexpress.notifications}
+    routing-key: ${RABBITMQ_ROUTING_KEY:notifications}
 management:
   endpoints:
     web:
