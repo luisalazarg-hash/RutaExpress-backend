@@ -16,5 +16,6 @@ public class NotificacionService {
 
     public Notificacion guardar(Notificacion notificacion) { return repository.save(notificacion); }
     public List<Notificacion> listarPorEnvio(UUID envioId) { return repository.findByEnvioId(envioId); }
+    public List<Notificacion> listarTodos() { return repository.findAll(); }
     public Notificacion obtener(UUID id) { return repository.findById(id).orElseThrow(); }
 }

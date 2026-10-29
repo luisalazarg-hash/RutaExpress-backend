@@ -16,6 +16,7 @@ services:
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_USERNAME: rutaexpress
       RABBITMQ_PASSWORD: rutaexpress
+      RABBITMQ_LISTENER_AUTO_STARTUP: "true"
   audit:
     build: ../ms-audit
     ports: ["8084:8084"]
