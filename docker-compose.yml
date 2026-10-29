@@ -233,7 +233,7 @@ services:
     build:
       context: ../RutaExpress-frontend
       args:
-        VITE_API_URL: ""
+        VITE_API_URL: ${VITE_API_URL}
         VITE_AZURE_CLIENT_ID: ${VITE_AZURE_CLIENT_ID:-}
         VITE_AZURE_TENANT_ID: ${VITE_AZURE_TENANT_ID:-}
         VITE_AZURE_API_SCOPE: ${VITE_AZURE_API_SCOPE:-}
