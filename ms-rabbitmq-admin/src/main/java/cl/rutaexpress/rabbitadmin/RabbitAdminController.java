@@ -23,7 +23,7 @@ public class RabbitAdminController {
     private final String managementUrl;
 
     public RabbitAdminController(ConnectionFactory connectionFactory,
-                                 @Value("${rabbitmq.management.url:http://localhost:15672}") String managementUrl,
+                                 @Value("${spring.rabbitmq.management.url:${rabbitmq.management.url:http://rabbitmq:15672}}") String managementUrl,
                                  @Value("${spring.rabbitmq.username:rutaexpress}") String username,
                                  @Value("${spring.rabbitmq.password:rutaexpress}") String password) {
         this.connectionFactory = connectionFactory;
