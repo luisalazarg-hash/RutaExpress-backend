@@ -91,9 +91,10 @@ services:
       RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
       RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-rutaexpress}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-rutaexpress}
-      RABBITMQ_EXCHANGE: ${RABBITMQ_EXCHANGE:-rutaexpress.events}
+      RABBITMQ_EXCHANGE: ${RABBITMQ_EXCHANGE:-cmd.topic}
       RABBITMQ_ROUTING_KEY_CREATED: ${RABBITMQ_ROUTING_KEY_CREATED:-shipment.created}
       RABBITMQ_ROUTING_KEY_STATUS_CHANGED: ${RABBITMQ_ROUTING_KEY_STATUS_CHANGED:-shipment.status.changed}
+      RABBITMQ_ROUTING_KEY_DETAIL: ${RABBITMQ_ROUTING_KEY_DETAIL:-shipment.detail.generated}
       JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
     depends_on:
       postgres:

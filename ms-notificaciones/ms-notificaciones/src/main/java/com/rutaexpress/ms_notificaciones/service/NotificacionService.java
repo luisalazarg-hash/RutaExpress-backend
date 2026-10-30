@@ -18,4 +18,7 @@ public class NotificacionService {
     public List<Notificacion> listarPorEnvio(UUID envioId) { return repository.findByEnvioId(envioId); }
     public List<Notificacion> listarTodos() { return repository.findAll(); }
     public Notificacion obtener(UUID id) { return repository.findById(id).orElseThrow(); }
+    public boolean existeEvento(String eventId) {
+        return eventId != null && repository.existsByEventId(eventId);
+    }
 }

@@ -27,9 +27,16 @@ spring:
         auto-startup: ${RABBITMQ_LISTENER_AUTO_STARTUP:false}
 app:
   rabbitmq:
-    exchange: ${RABBITMQ_EXCHANGE:rutaexpress.events}
-    queue: ${RABBITMQ_QUEUE:rutaexpress.notifications}
-    routing-key: ${RABBITMQ_ROUTING_KEY:shipment.#}
+    exchange: ${RABBITMQ_EXCHANGE:cmd.topic}
+    dead-letter-exchange: ${RABBITMQ_DLX_EXCHANGE:cmd.dead.dlx}
+    queues:
+      created: ${RABBITMQ_CREATED_QUEUE:shipment.created.queue}
+      status: ${RABBITMQ_STATUS_QUEUE:shipment.status.changed.queue}
+      detail: ${RABBITMQ_DETAIL_QUEUE:shipment.detail.queue}
+    routing-key:
+      created: ${RABBITMQ_ROUTING_KEY_CREATED:shipment.created}
+      status: ${RABBITMQ_ROUTING_KEY_STATUS:shipment.status.changed}
+      detail: ${RABBITMQ_ROUTING_KEY_DETAIL:shipment.detail.generated}
 management:
   endpoints:
     web:

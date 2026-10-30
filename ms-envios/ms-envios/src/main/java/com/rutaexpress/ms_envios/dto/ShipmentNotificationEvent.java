@@ -4,6 +4,11 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record ShipmentNotificationEvent(
+        String type,
+        UUID eventId,
+        Instant timestamp,
+        String traceId,
+        String correlationId,
         String eventType,
         UUID envioId,
         UUID productoId,

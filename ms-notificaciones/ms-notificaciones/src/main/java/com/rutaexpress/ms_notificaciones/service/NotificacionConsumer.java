@@ -21,32 +21,48 @@ public class NotificacionConsumer {
         this.notificacionService = notificacionService;
     }
 
-    @RabbitListener(queues = "${app.rabbitmq.queue}")
-    public void recibir(NotificacionEvento evento, Channel channel,
-                        @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) throws IOException {
+    @RabbitListener(queues = "${app.rabbitmq.queues.created}")
+    public void crear(NotificacionEvento evento, Channel channel,
+                      @Header(AmqpHeaders.DELIVERY_TAG) long tag) throws IOException {
+        procesar(evento, channel, tag, "creación");
+    }
+
+    @RabbitListener(queues = "${app.rabbitmq.queues.status}")
+    public void cambiarEstado(NotificacionEvento evento, Channel channel,
+                              @Header(AmqpHeaders.DELIVERY_TAG) long tag) throws IOException {
+        procesar(evento, channel, tag, "estado");
+    }
+
+    @RabbitListener(queues = "${app.rabbitmq.queues.detail}")
+    public void detalle(NotificacionEvento evento, Channel channel,
+                        @Header(AmqpHeaders.DELIVERY_TAG) long tag) throws IOException {
+        procesar(evento, channel, tag, "detalle");
+    }
+
+    private void procesar(NotificacionEvento evento, Channel channel, long deliveryTag, String flujo) throws IOException {
         try {
             if (evento == null || evento.getEnvioId() == null) {
-                log.warn("Evento de RabbitMQ recibido sin datos válidos; se confirma para evitar reintentos infinitos");
+                channel.basicAck(deliveryTag, false);
+                return;
+            }
+            if (notificacionService.existeEvento(evento.getEventId())) {
+                log.info("Evento RabbitMQ duplicado {}; se confirma", evento.getEventId());
                 channel.basicAck(deliveryTag, false);
                 return;
             }
 
             CanalNotificacion canal = CanalNotificacion.valueOf(evento.getCanal().trim().toUpperCase());
-            String mensaje = evento.getMensaje();
-            if (mensaje == null || mensaje.isBlank()) {
-                mensaje = "Pedido " + evento.getEnvioId();
-                if ("shipment.status.changed".equals(evento.getEventType())) {
-                    mensaje += " cambió de estado de " + evento.getEstadoAnterior() + " a " + evento.getEstadoNuevo();
-                }
-            }
+            String mensaje = evento.getMensaje() == null || evento.getMensaje().isBlank()
+                    ? "Pedido " + evento.getEnvioId() + " - " + flujo : evento.getMensaje();
             Notificacion notificacion = new Notificacion(evento.getEnvioId(), evento.getDestinatario(), mensaje, canal);
+            notificacion.setEventId(evento.getEventId());
             notificacion.setEnviada(true);
             notificacionService.guardar(notificacion);
             channel.basicAck(deliveryTag, false);
-            log.info("Notificación procesada para envío {} vía {}", evento.getEnvioId(), canal);
+            log.info("Notificación {} procesada: envío {}, evento {}", flujo, evento.getEnvioId(), evento.getEventId());
         } catch (Exception exception) {
-            log.error("Error procesando notificación RabbitMQ; el mensaje será devuelto", exception);
-            channel.basicNack(deliveryTag, false, true);
+            log.error("Error procesando flujo {}. El mensaje se enviará a su DLQ", flujo, exception);
+            channel.basicNack(deliveryTag, false, false);
         }
     }
 }
