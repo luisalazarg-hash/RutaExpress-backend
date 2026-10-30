@@ -12,12 +12,18 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class EnvioService {
     private final EnvioRepository repository;
+    private final ShipmentEventPublisher eventPublisher;
 
-    public EnvioService(EnvioRepository repository) {
+    public EnvioService(EnvioRepository repository, ShipmentEventPublisher eventPublisher) {
         this.repository = repository;
+        this.eventPublisher = eventPublisher;
     }
 
-    public Envio guardar(Envio envio) { return repository.save(envio); }
+    public Envio guardar(Envio envio) {
+        Envio guardado = repository.save(envio);
+        eventPublisher.pedidoCreado(guardado);
+        return guardado;
+    }
     public List<Envio> listar() { return repository.findAll(); }
     public List<Envio> listarPorEstado(EstadoEnvio estado) { return repository.findByEstado(estado); }
     public Envio obtener(UUID id) { return repository.findById(id).orElseThrow(); }
@@ -25,8 +31,11 @@ public class EnvioService {
     @Transactional
     public Envio cambiarEstado(UUID id, EstadoEnvio estado) {
         Envio envio = obtener(id);
+        EstadoEnvio estadoAnterior = envio.getEstado();
         envio.setEstado(estado);
-        return repository.save(envio);
+        Envio actualizado = repository.save(envio);
+        eventPublisher.estadoModificado(actualizado, estadoAnterior);
+        return actualizado;
     }
 
     public void eliminar(UUID id) { repository.deleteById(id); }

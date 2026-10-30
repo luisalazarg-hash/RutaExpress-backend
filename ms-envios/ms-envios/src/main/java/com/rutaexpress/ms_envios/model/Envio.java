@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
@@ -39,6 +40,11 @@ public class Envio {
     void inicializarFechas() {
         creadoEn = Instant.now();
         actualizadoEn = creadoEn;
+    }
+
+    @PreUpdate
+    void actualizarFecha() {
+        actualizadoEn = Instant.now();
     }
 
     public UUID getId() { return id; }

@@ -64,7 +64,7 @@ public class NotificacionController {
                 request.recipient(),
                 request.message(),
                 request.channel().name(),
-                java.time.LocalDateTime.now()));
+                java.time.Instant.now()));
 
         return ResponseEntity.accepted().body(Map.of("mensaje", "Evento encolado correctamente."));
     }
