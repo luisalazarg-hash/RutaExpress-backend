@@ -22,12 +22,14 @@ spring:
     password: ${RABBITMQ_PASSWORD:rutaexpress}
     listener:
       simple:
+        acknowledge-mode: manual
+        prefetch: ${RABBITMQ_PREFETCH:10}
         auto-startup: ${RABBITMQ_LISTENER_AUTO_STARTUP:false}
 app:
   rabbitmq:
     exchange: ${RABBITMQ_EXCHANGE:rutaexpress.events}
     queue: ${RABBITMQ_QUEUE:rutaexpress.notifications}
-    routing-key: ${RABBITMQ_ROUTING_KEY:notifications}
+    routing-key: ${RABBITMQ_ROUTING_KEY:shipment.#}
 management:
   endpoints:
     web:
