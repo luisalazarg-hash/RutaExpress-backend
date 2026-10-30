@@ -51,7 +51,7 @@ public class NotificacionConsumer {
                 return;
             }
 
-            CanalNotificacion canal = CanalNotificacion.valueOf(evento.getCanal().trim().toUpperCase());
+            CanalNotificacion canal = resolverCanal(evento.getCanal());
             String mensaje = evento.getMensaje() == null || evento.getMensaje().isBlank()
                     ? "Pedido " + evento.getEnvioId() + " - " + flujo : evento.getMensaje();
             Notificacion notificacion = new Notificacion(evento.getEnvioId(), evento.getDestinatario(), mensaje, canal);
@@ -59,10 +59,24 @@ public class NotificacionConsumer {
             notificacion.setEnviada(true);
             notificacionService.guardar(notificacion);
             channel.basicAck(deliveryTag, false);
-            log.info("Notificación {} procesada: envío {}, evento {}", flujo, evento.getEnvioId(), evento.getEventId());
+            log.info("Notificación {} procesada: envío {}, evento {}, canal {}", flujo, evento.getEnvioId(), evento.getEventId(), canal);
         } catch (Exception exception) {
             log.error("Error procesando flujo {}. El mensaje se enviará a su DLQ", flujo, exception);
             channel.basicNack(deliveryTag, false, false);
         }
+    }
+
+    private CanalNotificacion resolverCanal(String canal) {
+        if (canal == null || canal.isBlank()) {
+            return CanalNotificacion.EMAIL;
+        }
+
+        String valorNormalizado = canal.trim().toUpperCase();
+        return switch (valorNormalizado) {
+            case "EMAIL" -> CanalNotificacion.EMAIL;
+            case "SMS" -> CanalNotificacion.SMS;
+            case "PUSH", "PUSH_NOTIFICATION", "NOTIFICATION" -> CanalNotificacion.PUSH;
+            default -> CanalNotificacion.EMAIL;
+        };
     }
 }
