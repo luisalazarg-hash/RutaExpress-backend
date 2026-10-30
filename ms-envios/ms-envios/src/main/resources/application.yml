@@ -24,10 +24,11 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 app:
   rabbitmq:
-    exchange: ${RABBITMQ_EXCHANGE:rutaexpress.events}
+    exchange: ${RABBITMQ_EXCHANGE:cmd.topic}
     routing-key:
       created: ${RABBITMQ_ROUTING_KEY_CREATED:shipment.created}
       status-changed: ${RABBITMQ_ROUTING_KEY_STATUS_CHANGED:shipment.status.changed}
+      detail: ${RABBITMQ_ROUTING_KEY_DETAIL:shipment.detail.generated}
 management:
   endpoints:
     web:

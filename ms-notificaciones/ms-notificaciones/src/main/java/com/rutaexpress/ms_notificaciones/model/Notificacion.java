@@ -23,6 +23,7 @@ public class Notificacion {
     @Enumerated(EnumType.STRING)
     private CanalNotificacion canal;
     private boolean enviada;
+    private String eventId;
     private Instant creadoEn;
 
     protected Notificacion() {}
@@ -48,5 +49,7 @@ public class Notificacion {
     public void setCanal(CanalNotificacion canal) { this.canal = canal; }
     public boolean isEnviada() { return enviada; }
     public void setEnviada(boolean enviada) { this.enviada = enviada; }
+    public String getEventId() { return eventId; }
+    public void setEventId(String eventId) { this.eventId = eventId; }
     public Instant getCreadoEn() { return creadoEn; }
 }
